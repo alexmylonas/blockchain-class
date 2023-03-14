@@ -43,28 +43,26 @@ func stamp(value any) ([]byte, error) {
 
 }
 
-// func FromAddress(value any, v, r, s *big.Int) (string, error) {
-// 	// Prepare the data to be signed
-// 	data, err := stamp(value)
-// 	if err != nil {
-// 		return "", err
-// 	}
+func FromAddress(value any, v, r, s *big.Int) (string, error) {
+	// Prepare the data to be signed
+	data, err := stamp(value)
+	if err != nil {
+		return "", err
+	}
 
-// 	// Recover the public key
-// 	publicKey, err := crypto.SigToPub(data, v, r, s)
-// 	if err != nil {
-// 		return "", err
-// 	}
+	// Convert the V, R, and S values to a signature
+	sig := ToSignatureBytes(v, r, s)
 
-// 	// Extract the bytes for the original public key
-// 	// publickKeyBytes := crypto.FromECDSAPub(publicKey)
+	// Capture the public key from the signature
+	publicKey, err := crypto.SigToPub(data, sig)
+	if err != nil {
+		return "", err
+	}
 
-// 	// Create the address from the public key
-// 	address := crypto.PubkeyToAddress(*publicKey)
+	// Create the address from the public key
+	return crypto.PubkeyToAddress(*publicKey).String(), nil
 
-// 	// Return the address as a string
-// 	return address.String(), nil
-// }
+}
 
 func Sign(value any, privateKey *ecdsa.PrivateKey) (v, r, s *big.Int, err error) {
 
@@ -111,6 +109,14 @@ func ToVRSFromHexSignature(sigStr string) (v, r, s *big.Int, err error) {
 
 	return v, r, s, nil
 }
+func toSignatureValues(sig []byte) (v, r, s *big.Int) {
+	// Extract the V, R, and S values
+	r = big.NewInt(0).SetBytes(sig[:32])
+	s = big.NewInt(0).SetBytes(sig[32:64])
+	v = big.NewInt(0).SetBytes([]byte{sig[64] + ardanID})
+
+	return v, r, s
+}
 
 func ToSignatureBytes(v, r, s *big.Int) []byte {
 	// Create a buffer to hold the signature
@@ -129,11 +135,28 @@ func ToSignatureBytes(v, r, s *big.Int) []byte {
 	return sig
 }
 
-func toSignatureValues(sig []byte) (v, r, s *big.Int) {
-	// Extract the V, R, and S values
-	r = big.NewInt(0).SetBytes(sig[:32])
-	s = big.NewInt(0).SetBytes(sig[32:64])
-	v = big.NewInt(0).SetBytes([]byte{sig[64] + ardanID})
+func ToSignatureBytesWithArdanID(v, r, s *big.Int) []byte {
+	sig := ToSignatureBytes(v, r, s)
+	sig[64] = byte(v.Uint64())
 
-	return v, r, s
+	return sig
+}
+
+func VerifySignature(v, r, s *big.Int) error {
+	// check the recover id is ether 0 or 1
+	uintV := v.Uint64() - ardanID
+	if uintV != 0 && uintV != 1 {
+		return errors.New("invalid signature recover id")
+	}
+
+	// check the signature values are in the valid range
+	if !crypto.ValidateSignatureValues(byte(uintV), r, s, false) {
+		return errors.New("invalid signature values")
+	}
+
+	return nil
+}
+
+func SignatureString(v, r, s *big.Int) string {
+	return hexutil.Encode(ToSignatureBytesWithArdanID(v, r, s))
 }

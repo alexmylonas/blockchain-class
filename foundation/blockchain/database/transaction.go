@@ -3,6 +3,7 @@ package database
 import (
 	"crypto/ecdsa"
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/ardanlabs/blockchain/foundation/blockchain/signature"
@@ -58,4 +59,44 @@ func (tx Tx) Sign(privateKey *ecdsa.PrivateKey) (SignedTx, error) {
 		R:  r,
 		S:  s,
 	}, nil
+}
+
+func (tx SignedTx) Validate(chainID uint16) error {
+	if tx.ChainID != chainID {
+		return errors.New("invalid chain id")
+	}
+
+	if !tx.FromID.IsAccountID() {
+		return errors.New("invalid from account id")
+	}
+
+	if !tx.ToID.IsAccountID() {
+		return errors.New("invalid to account id")
+	}
+
+	if tx.FromID == tx.ToID {
+		return errors.New("from and to account ids are the same")
+	}
+
+	if err := signature.VerifySignature(tx.V, tx.R, tx.S); err != nil {
+		return err
+	}
+
+	address, err := signature.FromAddress(tx.Tx, tx.V, tx.R, tx.S)
+	if err != nil {
+		return err
+	}
+
+	if address != string(tx.FromID) {
+		return errors.New("signature does not match from account id")
+	}
+	return nil
+}
+
+func (tx SignedTx) SignatureString() string {
+	return signature.SignatureString(tx.V, tx.R, tx.S)
+}
+
+func (tx SignedTx) String() string {
+	return fmt.Sprintf("%s:%d", tx.FromID, tx.Nonce)
 }
