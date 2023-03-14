@@ -2,9 +2,11 @@ package main
 
 import (
 	"crypto/ecdsa"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -89,6 +91,30 @@ func run() error {
 
 	address2 := crypto.PubkeyToAddress(*publicKey2).String()
 	fmt.Println("PUB:", address2)
+
+	hexSig := hexutil.Encode(sig2)
+
+	vv, r, s, _ := ToVRSFromHexSignature(hexSig)
+
+	fmt.Println("V:", vv)
+	fmt.Println("R:", r)
+	fmt.Println("S:", s)
+
 	return nil
 
+}
+
+func ToVRSFromHexSignature(sigStr string) (v, r, s *big.Int, err error) {
+	// Decode the signature
+	sig, err := hex.DecodeString(sigStr[2:])
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to decode signature: %w", err)
+	}
+
+	// Extract the V, R, and S values
+	r = big.NewInt(0).SetBytes(sig[:32])
+	s = big.NewInt(0).SetBytes(sig[32:64])
+	v = big.NewInt(0).SetBytes([]byte{sig[64]})
+
+	return v, r, s, nil
 }

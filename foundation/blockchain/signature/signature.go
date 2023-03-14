@@ -3,6 +3,7 @@ package signature
 import (
 	"crypto/ecdsa"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -84,4 +85,36 @@ func Sign(value any, privateKey *ecdsa.PrivateKey) (v, r, s *big.Int, err error)
 	}
 	publickKeyBytes := crypto.FromECDSAPub(publickKeyECDSA)
 
+}
+
+func ToVRSFromHexSignature(sigStr string) (v, r, s *big.Int, err error) {
+	// Decode the signature
+	sig, err := hex.DecodeString(sigStr[2:])
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to decode signature: %w", err)
+	}
+
+	// Extract the V, R, and S values
+	r = big.NewInt(0).SetBytes(sig[:32])
+	s = big.NewInt(0).SetBytes(sig[32:64])
+	v = big.NewInt(0).SetBytes([]byte{sig[64]})
+
+	return v, r, s, nil
+}
+
+func ToSignatureBytes(v, r, s *big.Int) []byte {
+	// Create a buffer to hold the signature
+	sig := make([]byte, crypto.SignatureLength)
+
+	rBytes := make([]byte, 32)
+	r.FillBytes(rBytes)
+	copy(sig, rBytes)
+
+	sBytes := make([]byte, 32)
+	s.FillBytes(sBytes)
+	copy(sig[32:], sBytes)
+
+	sig[64] = byte(v.Uint64() - ardanID)
+
+	return sig
 }
