@@ -1,8 +1,11 @@
 package database
 
 import (
+	"crypto/ecdsa"
 	"errors"
 	"math/big"
+
+	"github.com/ardanlabs/blockchain/foundation/blockchain/signature"
 )
 
 type Tx struct {
@@ -40,4 +43,19 @@ type SignedTx struct {
 	V *big.Int `json:"v"` // Ethereum Recovery Identifier, either 29 or 30 for ardan chain
 	R *big.Int `json:"r"` // Ethereum: First coordinate of the ECDSA signature
 	S *big.Int `json:"s"` // Ethereum: Second coordinate of the ECDSA signature
+}
+
+func (tx Tx) Sign(privateKey *ecdsa.PrivateKey) (SignedTx, error) {
+
+	v, r, s, err := signature.Sign(tx, privateKey)
+	if err != nil {
+		return SignedTx{}, err
+	}
+
+	return SignedTx{
+		Tx: tx,
+		V:  v,
+		R:  r,
+		S:  s,
+	}, nil
 }

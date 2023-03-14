@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -56,7 +57,7 @@ func FromAddress(value any, v, r, s *big.Int) (string, error) {
 	}
 
 	// Extract the bytes for the original public key
-	publickKeyBytes := crypto.FromECDSAPub(publicKey)
+	// publickKeyBytes := crypto.FromECDSAPub(publicKey)
 
 	// Create the address from the public key
 	address := crypto.PubkeyToAddress(*publicKey)
@@ -64,6 +65,7 @@ func FromAddress(value any, v, r, s *big.Int) (string, error) {
 	// Return the address as a string
 	return address.String(), nil
 }
+
 func Sign(value any, privateKey *ecdsa.PrivateKey) (v, r, s *big.Int, err error) {
 
 	// Prepare the data to be signed
@@ -85,6 +87,14 @@ func Sign(value any, privateKey *ecdsa.PrivateKey) (v, r, s *big.Int, err error)
 	}
 	publickKeyBytes := crypto.FromECDSAPub(publickKeyECDSA)
 
+	// Check the public key validates the data and signature
+	rs := sig[:crypto.RecoveryIDOffset]
+	if !crypto.VerifySignature(publickKeyBytes, data, rs) {
+		return nil, nil, nil, errors.New("invalid signature produced")
+	}
+
+	v, r, s = toSignatureValues(sig)
+	return v, r, s, nil
 }
 
 func ToVRSFromHexSignature(sigStr string) (v, r, s *big.Int, err error) {
@@ -117,4 +127,13 @@ func ToSignatureBytes(v, r, s *big.Int) []byte {
 	sig[64] = byte(v.Uint64() - ardanID)
 
 	return sig
+}
+
+func toSignatureValues(sig []byte) (v, r, s *big.Int) {
+	// Extract the V, R, and S values
+	r = big.NewInt(0).SetBytes(sig[:32])
+	s = big.NewInt(0).SetBytes(sig[32:64])
+	v = big.NewInt(0).SetBytes([]byte{sig[64] + ardanID})
+
+	return v, r, s
 }
