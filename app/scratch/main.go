@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -21,6 +22,26 @@ func main() {
 		log.Fatalln(err)
 	}
 }
+
+func signTx(tx Tx, privateKey ecdsa.PrivateKey) (s, v, st []byte, err error) {
+	data, err := json.Marshal(tx)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to marshal transaction: %w", err)
+	}
+
+	stamp := []byte(fmt.Sprintf("\x19Ardan Signed Message:\n%d", len(data)))
+
+	vn := crypto.Keccak256(stamp, data)
+
+	sig, err := crypto.Sign(vn, &privateKey)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to sign data: %w", err)
+	}
+	fmt.Println("SIG:", string(hexutil.Encode(sig)))
+
+	return sig, vn, stamp, nil
+}
+
 func run() error {
 
 	privateKey, err := crypto.LoadECDSA("zblock/accounts/kennedy.ecdsa")
@@ -34,20 +55,10 @@ func run() error {
 		Amount: 1000,
 	}
 
-	data, err := json.Marshal(tx)
+	sig, v, _, err := signTx(tx, *privateKey)
 	if err != nil {
-		return fmt.Errorf("failed to marshal transaction: %w", err)
+		return fmt.Errorf("failed to sign transaction: %w", err)
 	}
-
-	v := crypto.Keccak256(data)
-
-	sig, err := crypto.Sign(v, privateKey)
-	if err != nil {
-		return fmt.Errorf("failed to sign data: %w", err)
-	}
-
-	s := hexutil.Encode(sig)
-	fmt.Println("SIG:", string(s))
 
 	publicKey, err := crypto.SigToPub(v, sig)
 	if err != nil {
@@ -66,14 +77,12 @@ func run() error {
 		Amount: 1000,
 	}
 
-	data2, err := json.Marshal(tx2)
+	sig2, v2, _, err := signTx(tx2, *privateKey)
 	if err != nil {
-		return fmt.Errorf("failed to marshal transaction: %w", err)
+		return fmt.Errorf("failed to sign transaction 2: %w", err)
 	}
 
-	v2 := crypto.Keccak256(data2)
-
-	publicKey2, err := crypto.SigToPub(v2, sig)
+	publicKey2, err := crypto.SigToPub(v2, sig2)
 	if err != nil {
 		return fmt.Errorf("failed to recover public key: %w", err)
 	}
