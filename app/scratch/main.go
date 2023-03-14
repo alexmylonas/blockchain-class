@@ -10,8 +10,8 @@ import (
 )
 
 type Tx struct {
-	FromID uint16 `json:"from"`
-	ToID   uint16 `json:"to"`
+	FromID string `json:"from"`
+	ToID   string `json:"to"`
 	Amount uint16 `json:"amount"`
 }
 
@@ -29,8 +29,8 @@ func run() error {
 	}
 
 	tx := Tx{
-		FromID: 1,
-		ToID:   2,
+		FromID: "0xF01813E4B85e178A83e29B8E7bF26BD830a25f32",
+		ToID:   "Aaron",
 		Amount: 1000,
 	}
 
@@ -49,9 +49,6 @@ func run() error {
 	s := hexutil.Encode(sig)
 	fmt.Println("SIG:", string(s))
 
-	// ==================================================
-	// OVER THE WIRE
-
 	publicKey, err := crypto.SigToPub(v, sig)
 	if err != nil {
 		return fmt.Errorf("failed to recover public key: %w", err)
@@ -59,6 +56,30 @@ func run() error {
 
 	address := crypto.PubkeyToAddress(*publicKey).String()
 	fmt.Println("PUB:", address)
+
+	// ==================================================
+	// OVER THE WIRE
+
+	tx2 := Tx{
+		FromID: "0xF01813E4B85e178A83e29B8E7bF26BD830a25f32",
+		ToID:   "Aarjon",
+		Amount: 1000,
+	}
+
+	data2, err := json.Marshal(tx2)
+	if err != nil {
+		return fmt.Errorf("failed to marshal transaction: %w", err)
+	}
+
+	v2 := crypto.Keccak256(data2)
+
+	publicKey2, err := crypto.SigToPub(v2, sig)
+	if err != nil {
+		return fmt.Errorf("failed to recover public key: %w", err)
+	}
+
+	address2 := crypto.PubkeyToAddress(*publicKey2).String()
+	fmt.Println("PUB:", address2)
 	return nil
 
 }
