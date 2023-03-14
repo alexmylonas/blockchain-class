@@ -43,28 +43,28 @@ func stamp(value any) ([]byte, error) {
 
 }
 
-func FromAddress(value any, v, r, s *big.Int) (string, error) {
-	// Prepare the data to be signed
-	data, err := stamp(value)
-	if err != nil {
-		return "", err
-	}
+// func FromAddress(value any, v, r, s *big.Int) (string, error) {
+// 	// Prepare the data to be signed
+// 	data, err := stamp(value)
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	// Recover the public key
-	publicKey, err := crypto.SigToPub(data, v, r, s)
-	if err != nil {
-		return "", err
-	}
+// 	// Recover the public key
+// 	publicKey, err := crypto.SigToPub(data, v, r, s)
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	// Extract the bytes for the original public key
-	// publickKeyBytes := crypto.FromECDSAPub(publicKey)
+// 	// Extract the bytes for the original public key
+// 	// publickKeyBytes := crypto.FromECDSAPub(publicKey)
 
-	// Create the address from the public key
-	address := crypto.PubkeyToAddress(*publicKey)
+// 	// Create the address from the public key
+// 	address := crypto.PubkeyToAddress(*publicKey)
 
-	// Return the address as a string
-	return address.String(), nil
-}
+// 	// Return the address as a string
+// 	return address.String(), nil
+// }
 
 func Sign(value any, privateKey *ecdsa.PrivateKey) (v, r, s *big.Int, err error) {
 

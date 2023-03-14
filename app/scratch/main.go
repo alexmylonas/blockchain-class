@@ -8,9 +8,14 @@ import (
 	"log"
 	"math/big"
 
+	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 )
+
+const KennedyPub = "0xF01813E4B85e178A83e29B8E7bF26BD830a25f32"
+
+const CeasarPub = "0xbEE6ACE826eC3DE1B6349888B9151B92522F7F76"
 
 type Tx struct {
 	FromID string `json:"from"`
@@ -100,6 +105,18 @@ func run() error {
 	fmt.Println("R:", r)
 	fmt.Println("S:", s)
 
+	fmt.Println("========== TX =================")
+	newTx, err := database.NewTx(1, 1, KennedyPub, CeasarPub, 1000, 0, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create new tx: %w", err)
+	}
+
+	signedTx, err := newTx.Sign(privateKey)
+	if err != nil {
+		return fmt.Errorf("failed to sign tx: %w", err)
+	}
+
+	fmt.Println("SIGNED TX:", signedTx)
 	return nil
 
 }
