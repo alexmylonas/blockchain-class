@@ -5,6 +5,19 @@ import "errors"
 // The last 20 bytes of the public key
 type AccountID string
 
+type Account struct {
+	AccountID AccountID
+	Balance   uint64
+	Nonce     uint64
+}
+
+func newAccount(accountID AccountID, balance uint64) Account {
+	return Account{
+		AccountID: accountID,
+		Balance:   balance,
+	}
+}
+
 func ToAccountID(hex string) (AccountID, error) {
 	a := AccountID(hex)
 	if !a.IsAccountID() {

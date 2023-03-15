@@ -13,7 +13,7 @@ type Genesis struct {
 	Difficulty    uint16            `json:"difficulty"`
 	MiningReward  uint16            `json:"mining_reward"`
 	GasPrice      uint16            `json:"gas_price"`
-	Balances      map[string]uint16 `json:"balances"`
+	Balances      map[string]uint64 `json:"balances"`
 }
 
 func Load() (Genesis, error) {
