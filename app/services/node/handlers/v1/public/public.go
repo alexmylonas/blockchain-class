@@ -50,3 +50,33 @@ func (h Handlers) Accounts(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	return web.Respond(ctx, w, accounts, http.StatusOK)
 }
+
+func (h Handlers) Mempool(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	acct := web.Param(r, "account")
+
+	mempool := h.State.Mempool()
+
+	trans := []tx{}
+
+	for _, tran := range mempool {
+		// Ignoring transactions that don't match the account.
+		if acct != "" && acct != string(tran.FromID) && (acct != string(tran.ToID)) {
+			continue
+		}
+
+		trans = append(trans, tx{
+			FromAccount: tran.FromID,
+			ToAccount:   tran.ToID,
+			ChainID:     tran.ChainID,
+			Nonce:       tran.Nonce,
+			Value:       tran.Value,
+			Tip:         tran.Tip,
+			Data:        tran.Data,
+			TimeStamp:   tran.TimeStamp,
+			GasPrice:    tran.GasPrice,
+			GasUnits:    tran.GasUnits,
+			Sig:         tran.SignatureString(),
+		})
+	}
+	return web.Respond(ctx, w, trans, http.StatusOK)
+}
