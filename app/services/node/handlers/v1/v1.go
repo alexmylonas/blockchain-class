@@ -30,8 +30,8 @@ func PublicRoutes(app *web.App, cfg Config) {
 	// app.Handle(http.MethodGet, version, "/events", pbl.Events)
 	app.Handle(http.MethodGet, version, "/genesis/list", pbl.Genesis)
 
-	// app.Handle(http.MethodGet, version, "/accounts/list", pbl.Accounts)
-	// app.Handle(http.MethodGet, version, "/accounts/list/:account", pbl.Account)
+	app.Handle(http.MethodGet, version, "/accounts/list", pbl.Accounts)
+	app.Handle(http.MethodGet, version, "/accounts/list/:account", pbl.Accounts)
 
 	// app.Handle(http.MethodGet, version, "/blocks/list/", pbl.BlocksByAccount)
 	// app.Handle(http.MethodGet, version, "/blocks/list/:account", pbl.BlocksByAccount)
