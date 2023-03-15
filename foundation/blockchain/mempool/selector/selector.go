@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	StrategyTip         = "tip"
-	StrategyTipAdvanced = "tip_advanced"
+	StrategyTip         = "Tip"
+	StrategyTipAdvanced = "Tip_advanced"
 )
 
 var strategies = map[string]Func{
