@@ -87,6 +87,10 @@ func (s *State) Shutdown() error {
 	return nil
 }
 
+func (s *State) Genesis() genesis.Genesis {
+	return s.genesis
+}
+
 func (s *State) Mempool() []database.BlockTx {
 	return s.mempool.PickBest()
 }
