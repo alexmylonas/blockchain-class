@@ -11,8 +11,12 @@ import (
 	"time"
 
 	"github.com/ardanlabs/blockchain/app/services/node/handlers"
+	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
+	"github.com/ardanlabs/blockchain/foundation/blockchain/genesis"
+	"github.com/ardanlabs/blockchain/foundation/blockchain/state"
 	"github.com/ardanlabs/blockchain/foundation/logger"
 	"github.com/ardanlabs/conf/v3"
+	"github.com/ethereum/go-ethereum/crypto"
 	"go.uber.org/zap"
 )
 
@@ -56,6 +60,16 @@ func run(log *zap.SugaredLogger) error {
 			PublicHost      string        `conf:"default:0.0.0.0:8080"`
 			PrivateHost     string        `conf:"default:0.0.0.0:9080"`
 		}
+		State struct {
+			Beneficiary string `conf:"default:miner1"`
+			// DBPath         string `conf:"default:zblock/miner1/"`
+			// SelectStrategy string `conf:"default:Tip"`
+			// OriginPeers    string `conf:"default:0.0.0.0:9080"`
+			// Consensus      string `conf:"default:POW"` // Change to POA to run proof of authority
+		}
+		NameService struct {
+			Folder string `conf:"default:zblock/accounts/"`
+		}
 	}{
 		Version: conf.Version{
 			Build: build,
@@ -94,6 +108,43 @@ func run(log *zap.SugaredLogger) error {
 		return fmt.Errorf("generating config for output: %w", err)
 	}
 	log.Infow("startup", "config", out)
+
+	// =========================================================================
+	// Blockchain Support
+	path := fmt.Sprintf("%s%s.ecdsa", cfg.NameService.Folder, cfg.State.Beneficiary)
+
+	privateKey, err := crypto.LoadECDSA(path)
+	if err != nil {
+		return fmt.Errorf("unable to load private key: %w", err)
+	}
+
+	ev := func(v string, args ...any) {
+		s := fmt.Sprintf(v, args...)
+		log.Infow(s, "traceid", "0000000-0000-0000-0000-000000000000")
+	}
+
+	// Load the genesis file for blockhain settings and origin balances
+	genesis, err := genesis.Load()
+	if err != nil {
+		return fmt.Errorf("unable to load genesis: %w", err)
+	}
+
+	// Create the blockchain state.
+	state, err := state.New(state.Config{
+		Beneficiary: database.PublicKeyToAccountID(privateKey.PublicKey),
+		Genesis:     genesis,
+		// Host:        cfg.Web.PrivateHost,
+		// DBPath:         cfg.State.DBPath,
+		// SelectStrategy: cfg.State.SelectStrategy,
+		// OriginPeers:    cfg.State.OriginPeers,
+		// Consensus:      cfg.State.Consensus,
+	}, ev)
+
+	if err != nil {
+		return fmt.Errorf("unable to create state: %w", err)
+	}
+
+	defer state.Shutdown()
 
 	// =========================================================================
 	// Start Debug Service
