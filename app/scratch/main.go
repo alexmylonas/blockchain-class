@@ -24,7 +24,7 @@ type Tx struct {
 }
 
 func main() {
-	err := run()
+	err := run2()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -49,6 +49,17 @@ func signTx(tx Tx, privateKey ecdsa.PrivateKey) (s, v, st []byte, err error) {
 	return sig, vn, stamp, nil
 }
 
+func run2() error {
+	privateKey, err := crypto.LoadECDSA("zblock/accounts/pavel.ecdsa")
+	if err != nil {
+		return fmt.Errorf("failed to load private key: %w", err)
+	}
+	fmt.Println(privateKey.PublicKey)
+	address2 := crypto.PubkeyToAddress(privateKey.PublicKey).String()
+	fmt.Println("PUB:", address2)
+	return nil
+
+}
 func run() error {
 
 	privateKey, err := crypto.LoadECDSA("zblock/accounts/kennedy.ecdsa")
