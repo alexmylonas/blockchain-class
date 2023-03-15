@@ -63,7 +63,7 @@ func run(log *zap.SugaredLogger) error {
 		State struct {
 			Beneficiary string `conf:"default:miner1"`
 			// DBPath         string `conf:"default:zblock/miner1/"`
-			// SelectStrategy string `conf:"default:Tip"`
+			SelectStrategy string `conf:"default:Tip"`
 			// OriginPeers    string `conf:"default:0.0.0.0:9080"`
 			// Consensus      string `conf:"default:POW"` // Change to POA to run proof of authority
 		}
@@ -135,7 +135,7 @@ func run(log *zap.SugaredLogger) error {
 		Genesis:     genesis,
 		// Host:        cfg.Web.PrivateHost,
 		// DBPath:         cfg.State.DBPath,
-		// SelectStrategy: cfg.State.SelectStrategy,
+		SelectStrategy: cfg.State.SelectStrategy,
 		// OriginPeers:    cfg.State.OriginPeers,
 		// Consensus:      cfg.State.Consensus,
 	}, ev)
