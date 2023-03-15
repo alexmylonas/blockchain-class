@@ -22,7 +22,7 @@ var tipSelect = func(m map[database.AccountID][]database.BlockTx, howMany int) [
 	for {
 		var row []database.BlockTx
 		for key := range m {
-			if len(m[key] > 0) {
+			if len(m[key]) > 0 {
 				row = append(row, m[key][0])
 				m[key] = m[key][1:]
 			}
