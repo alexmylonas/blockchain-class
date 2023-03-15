@@ -1,6 +1,11 @@
 package database
 
-import "errors"
+import (
+	"crypto/ecdsa"
+	"errors"
+
+	"github.com/ethereum/go-ethereum/crypto"
+)
 
 // The last 20 bytes of the public key
 type AccountID string
@@ -24,6 +29,10 @@ func ToAccountID(hex string) (AccountID, error) {
 		return "", errors.New("invalid account id")
 	}
 	return AccountID(hex), nil
+}
+
+func PublicKeyToAccountID(pk ecdsa.PublicKey) AccountID {
+	return AccountID(crypto.PubkeyToAddress(pk).String())
 }
 
 func (a AccountID) IsAccountID() bool {
