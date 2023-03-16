@@ -39,7 +39,7 @@ func PublicRoutes(app *web.App, cfg Config) {
 	app.Handle(http.MethodGet, version, "/tx/uncommited/list", pbl.Mempool)
 	app.Handle(http.MethodGet, version, "/tx/uncommited/list/:account", pbl.Mempool)
 
-	// app.Handle(http.MethodPost, version, "/tx/commit", pbl.SubmitWalletTx)
+	app.Handle(http.MethodPost, version, "/tx/commit", pbl.SubmitWalletTx)
 	// app.Handle(http.MethodPost, version, "/tx/proof/:block", pbl.SubmitWalletTx)
 
 }

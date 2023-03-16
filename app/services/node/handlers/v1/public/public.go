@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/http"
 
+	v1 "github.com/ardanlabs/blockchain/business/web/v1"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/state"
 	"github.com/ardanlabs/blockchain/foundation/web"
@@ -18,6 +19,35 @@ type Handlers struct {
 	// NS *nameservice.nameservice
 	// WS websocket.Upgrader
 	// Evts *events.Events
+}
+
+func (h Handlers) SubmitWalletTx(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	v, err := web.GetValues(ctx)
+	if err != nil {
+		return web.NewShutdownError("getting values")
+	}
+
+	var signedTx database.SignedTx
+	if err := web.Decode(r, &signedTx); err != nil {
+		return err
+	}
+
+	h.Log.Infow("submitting transaction", "traceID", v.TraceID, "sig:nonce", signedTx, "from", signedTx.FromID, "to", signedTx.ToID, "value", signedTx.Value, "tip", signedTx.Tip)
+
+	// Asks the state to add the transaction to the mempool.
+	// Only the checks that the transaction signature and the reciept account format
+	// Its up to wallet to check the balance and nonce.
+	// Fee will be taken if this transaction is included in a block.
+	if err := h.State.UpsertWalletTx(signedTx); err != nil {
+		return v1.NewRequestError(err, http.StatusBadRequest)
+	}
+	resp := struct {
+		Status string `json:"status"`
+	}{
+		Status: "transaction added to mempool",
+	}
+
+	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
 // Sample just provides a starting point for the class.
