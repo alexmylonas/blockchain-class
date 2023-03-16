@@ -356,16 +356,21 @@ func (t *Tree[T]) GetMerklePath() ([][]byte, []int64, error) {
 // the intermediate and root levels of the tree. Returns the resulting root node of the tree.
 func buildIntermediate[T Hashable[T]](nl []*Node[T], t *Tree[T]) (*Node[T], error) {
 	var nodes []*Node[T]
+
 	for i := 0; i < len(nl); i += 2 {
-		h := t.hashStrategy()
-		var left, right int = i, i + 1
+
+		left, right := i, i+1
 		if i+1 == len(nl) {
 			right = i
 		}
-		// chash := sortAppend(t.sort, nl[left].Hash, nl[right].Hash)
-		// if _, err := h.Write(chash); err != nil {
-		// 	return nil, err
-		// }
+
+		h := t.hashStrategy()
+		chash := append(nl[left].Hash, nl[right].Hash...)
+
+		if _, err := h.Write(chash); err != nil {
+			return nil, err
+		}
+
 		n := &Node[T]{
 			Left:  nl[left],
 			Right: nl[right],

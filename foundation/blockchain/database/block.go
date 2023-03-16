@@ -1,7 +1,12 @@
 package database
 
 import (
+	"context"
+	"crypto/rand"
 	"errors"
+	"math"
+	"math/big"
+	"time"
 
 	"github.com/ardanlabs/blockchain/foundation/blockchain/merkle"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/signature"
@@ -74,4 +79,106 @@ func (b *Block) Hash() string {
 	//   was included in a block.
 
 	return signature.Hash(b.Header)
+}
+
+type POWArgs struct {
+	BeneficiaryID AccountID
+	Difficulty    uint16
+	MiningReward  uint64
+	PrevBlock     Block
+	StateRoot     string
+	Trans         []BlockTx
+	EvHandler     func(v string, args ...any)
+}
+
+func POW(ctx context.Context, args POWArgs) (Block, error) {
+	// When mining the first block, the previous block hash is the zero hash.
+	prevBlockHash := signature.ZeroHash
+	if args.PrevBlock.Header.Number > 0 {
+		prevBlockHash = args.PrevBlock.Hash()
+	}
+
+	// Consturct a merkle tree
+	tree, err := merkle.NewTree(args.Trans)
+	if err != nil {
+		return Block{}, err
+	}
+
+	// Construct the block header
+	header := BlockHeader{
+		Number:        args.PrevBlock.Header.Number + 1,
+		PrevBlockHash: prevBlockHash,
+		Timestamp:     uint64(time.Now().UTC().UnixMilli()),
+		BeneficiaryID: args.BeneficiaryID,
+		Difficulty:    args.Difficulty,
+		MiningReward:  args.MiningReward,
+		StateRoot:     args.StateRoot,
+		TransRoot:     tree.RootHex(),
+		Nonce:         0,
+	}
+	// Create the block
+	block := Block{
+		Header:     header,
+		MerkleTree: tree,
+	}
+
+	if err := block.performPOW(ctx, args.EvHandler); err != nil {
+		return Block{}, err
+	}
+
+	return block, nil
+}
+
+func (b *Block) performPOW(ctx context.Context, ev func(v string, args ...any)) error {
+	ev("database:performPOW:started", b.Header.Number)
+	defer ev("database:performPOW:completed", b.Header.Number)
+
+	for _, tx := range b.MerkleTree.Values() {
+		ev("database:performPOW:tx [%s]", tx)
+	}
+
+	nBig, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+	if err != nil {
+		return err
+	}
+	b.Header.Nonce = nBig.Uint64()
+
+	ev("database: PerformPOW ")
+
+	var attemps uint64
+	for {
+		attemps++
+		if attemps%1000000 == 0 {
+			ev("database: PerformPOW for Attemps [%d]", attemps)
+		}
+
+		if ctx.Err() != nil {
+			ev("database: PerformPOW: Mining cancelled")
+			return ctx.Err()
+		}
+
+		hash := b.Hash()
+		if !isHashSolved(b.Header.Difficulty, hash) {
+			b.Header.Nonce++
+			continue
+		}
+		// We have a solved hash
+
+		ev("database: PerformPOW: Solved prevBlk[%s], newBlk[%s]", b.Header.PrevBlockHash, hash)
+		ev("database: PerformPOW: Attempts [%d]", attemps)
+
+		return nil
+	}
+}
+
+func isHashSolved(difficulty uint16, hash string) bool {
+	const match = "0x00000000000000000"
+
+	if len(hash) != 66 {
+		return false
+	}
+
+	difficulty += 2
+
+	return hash[:difficulty] == match[:difficulty]
 }
