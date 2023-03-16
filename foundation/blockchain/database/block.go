@@ -130,8 +130,8 @@ func POW(ctx context.Context, args POWArgs) (Block, error) {
 }
 
 func (b *Block) performPOW(ctx context.Context, ev func(v string, args ...any)) error {
-	ev("database:performPOW:started", b.Header.Number)
-	defer ev("database:performPOW:completed", b.Header.Number)
+	ev("database:performPOW:started")
+	defer ev("database:performPOW:completed")
 
 	for _, tx := range b.MerkleTree.Values() {
 		ev("database:performPOW:tx [%s]", tx)
