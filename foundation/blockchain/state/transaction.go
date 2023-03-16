@@ -1,6 +1,10 @@
 package state
 
-import "github.com/ardanlabs/blockchain/foundation/blockchain/database"
+import (
+	"context"
+
+	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
+)
 
 func (s *State) UpsertWalletTx(signedTx database.SignedTx) error {
 	if err := signedTx.Validate(s.genesis.ChainID); err != nil {
@@ -13,6 +17,12 @@ func (s *State) UpsertWalletTx(signedTx database.SignedTx) error {
 		return err
 	}
 
+	if s.mempool.Count() == 6 {
+		go func() {
+			s.MineNewBlock(context.Background())
+			s.mempool.Truncate()
+		}()
+	}
 	// s.Worker.SignalShareTx(tx)
 	// s.Worker.SingalStartMining()
 	return nil
