@@ -50,6 +50,7 @@ func PublicMux(cfg MuxConfig) http.Handler {
 	v1.PublicRoutes(app, v1.Config{
 		Log:   cfg.Log,
 		State: cfg.State,
+		NS:    cfg.NS,
 	})
 
 	return app
