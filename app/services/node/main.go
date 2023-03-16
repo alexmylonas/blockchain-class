@@ -15,6 +15,7 @@ import (
 	"github.com/ardanlabs/blockchain/foundation/blockchain/genesis"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/state"
 	"github.com/ardanlabs/blockchain/foundation/logger"
+	"github.com/ardanlabs/blockchain/foundation/nameservice"
 	"github.com/ardanlabs/conf/v3"
 	"github.com/ethereum/go-ethereum/crypto"
 	"go.uber.org/zap"
@@ -110,6 +111,17 @@ func run(log *zap.SugaredLogger) error {
 	log.Infow("startup", "config", out)
 
 	// =========================================================================
+	// Nameservice Support
+	ns, err := nameservice.New(cfg.NameService.Folder)
+	if err != nil {
+		return fmt.Errorf("unable to create nameservice: %w", err)
+	}
+
+	for acc, name := range ns.Copy() {
+		log.Infow("startup", "state", "nameservice", "name", name, "account", acc)
+	}
+
+	// =========================================================================
 	// Blockchain Support
 	path := fmt.Sprintf("%s%s.ecdsa", cfg.NameService.Folder, cfg.State.Beneficiary)
 
@@ -186,6 +198,7 @@ func run(log *zap.SugaredLogger) error {
 	publicMux := handlers.PublicMux(handlers.MuxConfig{
 		Shutdown: shutdown,
 		Log:      log,
+		NS:       ns,
 		State:    state,
 	})
 
