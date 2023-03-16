@@ -30,13 +30,13 @@ var sendCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(sendCmd)
-	rootCmd.Flags().StringVarP(&url, "url", "u", "http://localhost:8080", "URL of the blockchain node")
-	rootCmd.Flags().Uint64VarP(&nonce, "nonce", "n", 0, "Nonce of the transaction")
-	rootCmd.Flags().StringVarP(&from, "from", "f", "", "From address")
-	rootCmd.Flags().StringVarP(&to, "to", "t", "", "To address")
-	rootCmd.Flags().Uint64VarP(&value, "value", "v", 0, "Value of the transaction")
-	rootCmd.Flags().Uint64VarP(&tip, "tip", "p", 0, "Tip of the transaction")
-	rootCmd.Flags().BytesHexVarP(&data, "data", "d", nil, "Data of the transaction")
+	sendCmd.Flags().StringVarP(&url, "url", "u", "http://localhost:8080", "URL of the blockchain node")
+	sendCmd.Flags().Uint64VarP(&nonce, "nonce", "n", 0, "Nonce of the transaction")
+	sendCmd.Flags().StringVarP(&from, "from", "f", "", "From address")
+	sendCmd.Flags().StringVarP(&to, "to", "t", "", "To address")
+	sendCmd.Flags().Uint64VarP(&value, "value", "v", 0, "Value of the transaction")
+	sendCmd.Flags().Uint64VarP(&tip, "tip", "c", 0, "Tip of the transaction")
+	sendCmd.Flags().BytesHexVarP(&data, "data", "d", nil, "Data of the transaction")
 }
 
 func sendRun(cmd *cobra.Command, args []string) {
