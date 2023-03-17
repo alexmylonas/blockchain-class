@@ -30,7 +30,7 @@ type act struct {
 }
 
 type actInfo struct {
-	LatestBlock block
+	LatestBlock block `json:"latest_block"`
 	Uncommitted int   `json:"uncommitted"`
 	Accounts    []act `json:"accounts"`
 }
