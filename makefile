@@ -19,6 +19,7 @@ SHELL := /bin/bash
 # Sample calls
 # curl -il -X GET http://localhost:8080/v1/sample
 # curl -il -X GET http://localhost:9080/v1/node/sample
+# curl -il -X GET http://localhost:8080/v1/cancel
 #
 
 # ==============================================================================
