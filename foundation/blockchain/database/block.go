@@ -13,6 +13,13 @@ import (
 )
 
 var ErrChainForked = errors.New("blockchain forked, start resync")
+var ErrInvalidDifficulty = errors.New("invalid difficulty")
+var ErrInvalidHash = errors.New("invalid hash")
+var ErrInvalidBlockNumber = errors.New("invalid block number")
+var ErrInvalidPrevBlockHash = errors.New("invalid previous block hash")
+var ErrInvalidBlockTimestamp = errors.New("invalid block timestamp")
+var ErrInvalidStateRoot = errors.New("invalid state root")
+var ErrInvalidTransRoot = errors.New("invalid transaction root")
 
 type BlockData struct {
 	Hash   string      `json:"hash"`
@@ -169,6 +176,66 @@ func (b *Block) performPOW(ctx context.Context, ev func(v string, args ...any)) 
 
 		return nil
 	}
+}
+
+func (b Block) ValidateBlock(previousBlock Block, stateRoot string, evHandler func(v string, args ...any)) error {
+	evHandler("database: ValidateBlock: blk[%d]: check: chain is not forked", b.Header.Number)
+
+	// The node who sent this block has a chain that is two or more blocks ahead of us.
+	nextNumber := previousBlock.Header.Number + 1
+	if b.Header.Number >= nextNumber+2 {
+		return ErrChainForked
+	}
+
+	evHandler("database: ValidateBlock: blk[%d]: check: block number is correct", b.Header.Number)
+
+	if b.Header.Difficulty < previousBlock.Header.Difficulty {
+		return ErrInvalidDifficulty
+	}
+
+	evHandler("database: ValidateBlock: blk[%d]: check: block difficulty is correct", b.Header.Number)
+
+	hash := b.Hash()
+	if !isHashSolved(b.Header.Difficulty, hash) {
+		return ErrInvalidHash
+	}
+
+	evHandler("database: ValidateBlock: blk[%d]: check: block hash is correct", b.Header.Number)
+
+	if b.Header.Number != nextNumber {
+		return ErrInvalidBlockNumber
+	}
+
+	evHandler("database: ValidateBlock: blk[%d]: check: block number is correct", b.Header.Number)
+
+	if b.Header.PrevBlockHash != previousBlock.Hash() {
+		return ErrInvalidPrevBlockHash
+	}
+
+	if previousBlock.Header.Timestamp > 0 {
+		parentTime := time.Unix(0, int64(previousBlock.Header.Timestamp))
+		blockTime := time.Unix(0, int64(b.Header.Timestamp))
+
+		if blockTime.Before(parentTime) {
+			return ErrInvalidBlockTimestamp
+		}
+
+		evHandler("database: ValidateBlock: blk[%d]: check: block timestamp is correct", b.Header.Number)
+	}
+
+	if b.Header.StateRoot != stateRoot {
+		return ErrInvalidStateRoot
+	}
+
+	evHandler("database: ValidateBlock: blk[%d]: check: block state root is correct", b.Header.Number)
+
+	if b.Header.TransRoot != b.MerkleTree.RootHex() {
+		return ErrInvalidTransRoot
+	}
+
+	evHandler("database: ValidateBlock: blk[%d]: check: trans root is correct", b.Header.Number)
+
+	return nil
 }
 
 func isHashSolved(difficulty uint16, hash string) bool {

@@ -112,3 +112,72 @@ func (db *Database) HashState() string {
 
 	return signature.Hash(accounts)
 }
+
+func (db *Database) ApplyMiningReward(block Block) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	account := db.accounts[block.Header.BeneficiaryID]
+
+	account.Balance += db.genesis.MiningReward
+
+	db.accounts[block.Header.BeneficiaryID] = account
+}
+
+func (db *Database) ApplyTransaction(block Block, tx BlockTx) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	from, exists := db.accounts[tx.FromID]
+	if !exists {
+		return errors.New("from account not found")
+	}
+
+	to, exists := db.accounts[tx.ToID]
+	if !exists {
+		to = newAccount(tx.ToID, 0)
+	}
+
+	bnfc, exists := db.accounts[block.Header.BeneficiaryID]
+	if !exists {
+		bnfc = newAccount(block.Header.BeneficiaryID, 0)
+	}
+
+	gasFee := tx.GasPrice * tx.GasUnits
+	if gasFee > from.Balance {
+		gasFee = from.Balance
+	}
+
+	from.Balance -= gasFee
+	bnfc.Balance += gasFee
+
+	db.accounts[tx.FromID] = from
+	db.accounts[block.Header.BeneficiaryID] = bnfc
+
+	// Perform basic accounting checks
+	{
+		if tx.Nonce != (from.Nonce + 1) {
+			return errors.New("invalid nonce")
+		}
+		if from.Balance == 0 || from.Balance < (tx.Value+tx.Tip) {
+			return errors.New("insufficient funds")
+		}
+	}
+
+	// Perform the transfer
+	from.Balance -= tx.Value
+	to.Balance += tx.Value
+
+	// Give benefiaciary the tip
+	from.Balance -= tx.Tip
+	bnfc.Balance += tx.Tip
+
+	from.Nonce = tx.Nonce
+
+	// Update the final changes to the accounts
+	db.accounts[tx.FromID] = from
+	db.accounts[tx.ToID] = to
+	db.accounts[block.Header.BeneficiaryID] = bnfc
+
+	return nil
+}

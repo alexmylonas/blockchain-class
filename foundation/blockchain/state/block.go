@@ -46,7 +46,56 @@ func (s *State) MineNewBlock(ctx context.Context) (database.Block, error) {
 	}
 	s.evHandler("viewer: MineNewBlock: MINING adding new block to database")
 
-	// if err := s.validateUpdateDatabase(block); err != nil {
-	// }
+	if err := s.validateUpdateDatabase(block); err != nil {
+		return database.Block{}, err
+	}
 	return block, nil
+}
+
+// =============================================================================
+func (s *State) validateUpdateDatabase(block database.Block) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.evHandler("state: validateUpdateDatabase: VALIDATING block")
+
+	// CORE NOTE: We could add logic to determine if this block was mine or not.
+	// If it was mined by this, even if a peer beat me to this function for the same block
+	// number, I could replace the peer block with my own.
+
+	if err := block.ValidateBlock(s.db.LatestBlock(), s.db.HashState(), s.evHandler); err != nil {
+		return err
+	}
+
+	// Write block to database.
+	// if err := s.db.Write(block) err != nil {
+	// 	return err
+	// }
+
+	// Update the state with the new block.
+	s.db.UpdateLatestBlock(block)
+
+	s.evHandler("state: validateUpdateDatabase: UPDATED LATEST BLOCK head is now [%d]", block.Header.Number)
+
+	s.evHandler("state: validateUpdateDatabase: UPDATING state with new block")
+
+	for _, tx := range block.MerkleTree.Values() {
+		s.evHandler("state: validateUpdateDatabase: UPDATING state with tx [%s]", tx)
+
+		s.mempool.Delete(tx)
+
+		if err := s.db.ApplyTransaction(block, tx); err != nil {
+			s.evHandler("state: validateUpdateDatabase: ERROR [%s]", err)
+			continue
+		}
+	}
+
+	s.evHandler("state: validateUpdateDatabase: applying Mining Reward")
+
+	s.db.ApplyMiningReward(block)
+
+	// Send an event about this new block
+	// s.blockEvent(block)
+
+	return nil
 }
