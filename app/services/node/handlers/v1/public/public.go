@@ -24,6 +24,7 @@ type Handlers struct {
 
 func (h Handlers) Cancel(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	h.State.Worker.SignalStartMining()
+
 	resp := struct {
 		Status string `json:"status"`
 	}{
