@@ -79,7 +79,28 @@ func (h Handlers) Accounts(ctx context.Context, w http.ResponseWriter, r *http.R
 		accounts = map[database.AccountID]database.Account{accountID: account}
 	}
 
-	return web.Respond(ctx, w, accounts, http.StatusOK)
+	resp := make([]act, 0, len(accounts))
+	for accountID, account := range accounts {
+		resp = append(resp, act{
+			AccountID: accountID,
+			Name:      h.NS.Lookup(accountID),
+			Balance:   account.Balance,
+			Nonce:     account.Nonce,
+		})
+	}
+
+	latestBlock := h.State.LatestBlock()
+
+	ai := actInfo{
+		LatestBlock: block{
+			Hash:   latestBlock.Hash(),
+			Number: latestBlock.Header.Number,
+		},
+		Uncommitted: h.State.MempoolLength(),
+		Accounts:    resp,
+	}
+
+	return web.Respond(ctx, w, ai, http.StatusOK)
 }
 
 func (h Handlers) Mempool(ctx context.Context, w http.ResponseWriter, r *http.Request) error {

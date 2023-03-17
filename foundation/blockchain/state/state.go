@@ -108,6 +108,9 @@ func (s *State) Genesis() genesis.Genesis {
 	return s.genesis
 }
 
+func (s *State) LatestBlock() database.Block {
+	return s.db.LatestBlock()
+}
 func (s *State) Mempool() []database.BlockTx {
 	return s.mempool.PickBest()
 }

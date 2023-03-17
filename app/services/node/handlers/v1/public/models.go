@@ -21,3 +21,21 @@ type tx struct {
 	Proof        []string `json:"proof"`
 	ProofOfOrder []int64  `json:"proof_order"`
 }
+
+type act struct {
+	AccountID database.AccountID `json:"account"`
+	Name      string             `json:"name"`
+	Balance   uint64             `json:"balance"`
+	Nonce     uint64             `json:"nonce"`
+}
+
+type actInfo struct {
+	LatestBlock block
+	Uncommitted int   `json:"uncommitted"`
+	Accounts    []act `json:"accounts"`
+}
+
+type block struct {
+	Hash   string `json:"hash"`
+	Number uint64 `json:"number"`
+}
