@@ -22,17 +22,6 @@ type Handlers struct {
 	// Evts *events.Events
 }
 
-func (h Handlers) Cancel(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	h.State.Worker.SignalCancelMining()
-
-	resp := struct {
-		Status string `json:"status"`
-	}{
-		Status: "cancel",
-	}
-	return web.Respond(ctx, w, resp, http.StatusOK)
-}
-
 func (h Handlers) SubmitWalletTx(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	v, err := web.GetValues(ctx)
 	if err != nil {

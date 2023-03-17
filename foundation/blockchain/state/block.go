@@ -46,8 +46,6 @@ func (s *State) MineNewBlock(ctx context.Context) (database.Block, error) {
 	}
 	s.evHandler("viewer: MineNewBlock: MINING adding new block to database")
 
-	// REMOVE THIS
-	s.mempool.Truncate()
 	// if err := s.validateUpdateDatabase(block); err != nil {
 	// }
 	return block, nil
