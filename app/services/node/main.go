@@ -14,6 +14,7 @@ import (
 	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/genesis"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/state"
+	"github.com/ardanlabs/blockchain/foundation/blockchain/worker"
 	"github.com/ardanlabs/blockchain/foundation/logger"
 	"github.com/ardanlabs/blockchain/foundation/nameservice"
 	"github.com/ardanlabs/conf/v3"
@@ -157,6 +158,12 @@ func run(log *zap.SugaredLogger) error {
 	}
 
 	defer state.Shutdown()
+
+	// The worker package implements the different workflows such as mining and
+	// transaction peer sharing and peer updates. The worker will register itself
+	// with the state.
+
+	worker.Run(state, ev)
 
 	// =========================================================================
 	// Start Debug Service

@@ -9,10 +9,6 @@ import (
 
 var ErrNoTransactions = errors.New("no transactions in mempool")
 
-const (
-	ConsensusPoA = "PoA"
-)
-
 func (s *State) MineNewBlock(ctx context.Context) (database.Block, error) {
 	defer s.evHandler("viewer: MineNewBlock: MINING completed")
 

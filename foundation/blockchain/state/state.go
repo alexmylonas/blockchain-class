@@ -8,8 +8,23 @@ import (
 	"github.com/ardanlabs/blockchain/foundation/blockchain/mempool"
 )
 
+const (
+	ConsensusPoA = "PoA"
+	ConsensusPoW = "PoW"
+)
+
 // EventHandler defines a function that can be called when an event occurs.
 type EventHandler func(v string, args ...any)
+
+// Worker interface represents the behaviour required to be implemented by an package
+// providing support for mining, peer update and trasaction sharing.
+type Worker interface {
+	Shutdown()
+	// Sync()
+	SignalStartMining()
+	SignalCancelMining()
+	// SignalShareTx(blockTx database.BlockTx)
+}
 
 type Config struct {
 	Beneficiary database.AccountID
@@ -39,7 +54,7 @@ type State struct {
 
 	db *database.Database
 
-	// Worker Worker
+	Worker Worker
 }
 
 func New(cfg Config, ev func(v string, args ...any)) (*State, error) {
@@ -66,6 +81,8 @@ func New(cfg Config, ev func(v string, args ...any)) (*State, error) {
 
 		db: db,
 	}
+	// The Worker is not set here. The call to worker.Run will assign itself
+	// and start everything up and running for the node
 
 	return &state, nil
 }
@@ -79,7 +96,7 @@ func (s *State) Shutdown() error {
 	// }()
 
 	// Stop all the blockchain writing activity.
-	// s.Worker.Shutdown()
+	s.Worker.Shutdown()
 
 	// Wait for the resync to complete.
 	// s.resyncWG.Wait()
@@ -95,7 +112,7 @@ func (s *State) Mempool() []database.BlockTx {
 	return s.mempool.PickBest()
 }
 
-func (s *State) MempoolCount() int {
+func (s *State) MempoolLength() int {
 	return s.mempool.Count()
 }
 

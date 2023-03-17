@@ -1,8 +1,6 @@
 package state
 
 import (
-	"context"
-
 	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
 )
 
@@ -17,13 +15,15 @@ func (s *State) UpsertWalletTx(signedTx database.SignedTx) error {
 		return err
 	}
 
-	if s.mempool.Count() == 6 {
-		go func() {
-			s.MineNewBlock(context.Background())
-			s.mempool.Truncate()
-		}()
-	}
+	// Hack to mine a block when the mempool is full.
+	// if s.mempool.Count() == 6 {
+	// 	go func() {
+	// 		s.MineNewBlock(context.Background())
+	// 		s.mempool.Truncate()
+	// 	}()
+	// }
 	// s.Worker.SignalShareTx(tx)
-	// s.Worker.SingalStartMining()
+	s.Worker.SignalStartMining()
+
 	return nil
 }
