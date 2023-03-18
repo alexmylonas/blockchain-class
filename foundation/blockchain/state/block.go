@@ -52,6 +52,18 @@ func (s *State) MineNewBlock(ctx context.Context) (database.Block, error) {
 	return block, nil
 }
 
+func (s *State) ProcessProposedBlock(block database.Block) error {
+	s.evHandler("state: ProcessProposedBlock: started: prevBlk[%d]: newBlk[%d]: numTx in block[%d]", s.db.LatestBlock().Header.Number, block.Header.Number, len(block.MerkleTree.Values()))
+	defer s.evHandler("state: ProcessProposedBlock: completed: newBlock[%d] added", block.Header.Number)
+
+	if err := s.validateUpdateDatabase(block); err != nil {
+		return err
+	}
+
+	s.Worker.SignalCancelMining()
+	return nil
+}
+
 // =============================================================================
 func (s *State) validateUpdateDatabase(block database.Block) error {
 	s.mu.Lock()
