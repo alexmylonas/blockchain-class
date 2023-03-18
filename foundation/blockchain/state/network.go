@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/peer"
@@ -55,7 +56,7 @@ func (s *State) NetRequestPeerBlocks(pr peer.Peer) error {
 	// Currently, the Ardan blockchain is a full node only and needs the transactions to have a comple account database.
 	// The cryptographic audit takes place at each full block is downloead from peers.
 
-	from := s.LatestBlock().Header.Number + 1
+	from := strconv.FormatUint(s.LatestBlock().Header.Number+1, 10)
 	blocksUrl := fmt.Sprintf(pr.Url()+peer.BlocksUri, from, "latest")
 
 	// Getting all blocks from current block until peer's latest block.
@@ -86,9 +87,8 @@ func (s *State) NetSendNodeAvailableToPeers() {
 
 	for _, pr := range s.KnowExternalPeers() {
 		s.evHandler("state: NetSendNodeAvailableToPeers: sending to peer %s", pr.Host)
-		url := fmt.Sprintf("%/peers", fmt.Sprintf(peer.BaseUrl, pr.Host))
-
-		if err := send(http.MethodPost, url, host, nil); err != nil {
+		peerUrl := pr.Url() + peer.PeerUri
+		if err := send(http.MethodPost, peerUrl, host, nil); err != nil {
 			s.evHandler("state: NetSendNodeAvailableToPeers: error sending to peer %s: %s", pr.Host, err)
 		}
 	}

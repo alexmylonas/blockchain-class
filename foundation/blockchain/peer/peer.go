@@ -10,7 +10,7 @@ const (
 	StatusUri  = "/status"
 	MempoolUri = "/tx/list"
 	BlocksUri  = "/block/list/%s/%s"
-	PeerUri    = "/%s/peers"
+	PeerUri    = "/peers"
 )
 
 type Peer struct {
