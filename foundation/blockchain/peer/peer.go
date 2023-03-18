@@ -1,6 +1,11 @@
 package peer
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
+
+const baseUrl = "http://%s/v1/node"
 
 type Peer struct {
 	Host string
@@ -31,6 +36,13 @@ func NewPeerSet() *PeerSet {
 	return &PeerSet{
 		set: make(map[Peer]struct{}),
 	}
+}
+
+func (p Peer) Url() string {
+	return fmt.Sprintf(baseUrl, p.Host)
+}
+func (p Peer) StatusUrl() string {
+	return fmt.Sprintf("%s/status", p.Url())
 }
 
 func (ps *PeerSet) Add(peer Peer) bool {

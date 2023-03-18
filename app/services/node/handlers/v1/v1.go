@@ -50,8 +50,10 @@ func PublicRoutes(app *web.App, cfg Config) {
 // PrivateRoutes binds all the version 1 private routes.
 func PrivateRoutes(app *web.App, cfg Config) {
 	prv := private.Handlers{
-		Log: cfg.Log,
+		Log:   cfg.Log,
+		NS:    cfg.NS,
+		State: cfg.State,
 	}
 
-	app.Handle(http.MethodGet, version, "/node/sample", prv.Sample)
+	app.Handle(http.MethodGet, version, "/node/status", prv.Status)
 }

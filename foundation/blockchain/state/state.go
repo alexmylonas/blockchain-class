@@ -127,15 +127,3 @@ func (s *State) UpsertMempool(tx database.BlockTx) error {
 func (s *State) Accounts() map[database.AccountID]database.Account {
 	return s.db.Copy()
 }
-
-// func (s *State) AddKnowPeer(peer peer.Peer) bool {
-// s.knownPeers.Add(peer)
-// }
-
-func (s *State) KnowExternalPeers() []peer.Peer {
-	return s.knownPeers.Copy(s.host)
-}
-
-func (s *State) Host() string {
-	return s.host
-}
