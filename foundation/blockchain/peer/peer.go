@@ -5,7 +5,13 @@ import (
 	"sync"
 )
 
-const baseUrl = "http://%s/v1/node"
+const (
+	BaseUrl    = "http://%s/v1/node"
+	StatusUri  = "/status"
+	MempoolUri = "/tx/list"
+	BlocksUri  = "/block/list/%s/%s"
+	PeerUri    = "/%s/peers"
+)
 
 type Peer struct {
 	Host string
@@ -39,10 +45,7 @@ func NewPeerSet() *PeerSet {
 }
 
 func (p Peer) Url() string {
-	return fmt.Sprintf(baseUrl, p.Host)
-}
-func (p Peer) StatusUrl() string {
-	return fmt.Sprintf("%s/status", p.Url())
+	return fmt.Sprintf(BaseUrl, p.Host)
 }
 
 func (ps *PeerSet) Add(peer Peer) bool {

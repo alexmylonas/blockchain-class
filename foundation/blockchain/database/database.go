@@ -229,6 +229,15 @@ func (db *Database) ApplyTransaction(block Block, tx BlockTx) error {
 	return nil
 }
 
+func (db *Database) GetBlock(num uint64) (Block, error) {
+	blockData, err := db.storage.GetBlockByNumber(num)
+	if err != nil {
+		return Block{}, err
+	}
+
+	return ToBlock(blockData)
+}
+
 type DatabaseIterator struct {
 	iterator Iterator
 }

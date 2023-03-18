@@ -29,8 +29,8 @@ func (w *Worker) Sync() {
 			w.state.UpsertMempool(tx)
 		}
 
-		if peerStatus.LatestBlock > w.state.LatestBlock().Header.Number {
-			w.evHandler("worker: SYNC: retrivePeerBlocks: %s: latestBlockNumber [%d]", peer.Host, peerStatus.LatestBlock)
+		if peerStatus.LatestBlockNum > w.state.LatestBlock().Header.Number {
+			w.evHandler("worker: SYNC: retrivePeerBlocks: %s: latestBlockNumber [%d]", peer.Host, peerStatus.LatestBlockNum)
 
 			if err := w.state.NetRequestPeerBlocks(peer); err != nil {
 				w.evHandler("worker: SYNC: retrievePeerBlockchain: %s ERROR %s", peer.Host, err)

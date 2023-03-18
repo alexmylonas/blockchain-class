@@ -3,10 +3,12 @@
 package v1
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/ardanlabs/blockchain/app/services/node/handlers/v1/private"
 	"github.com/ardanlabs/blockchain/app/services/node/handlers/v1/public"
+	"github.com/ardanlabs/blockchain/foundation/blockchain/peer"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/state"
 	"github.com/ardanlabs/blockchain/foundation/nameservice"
 	"github.com/ardanlabs/blockchain/foundation/web"
@@ -55,5 +57,10 @@ func PrivateRoutes(app *web.App, cfg Config) {
 		State: cfg.State,
 	}
 
+	app.Handle(http.MethodPost, version, "/node/peers", prv.SubmitPeer)
 	app.Handle(http.MethodGet, version, "/node/status", prv.Status)
+	app.Handle(http.MethodGet, version, "/node/tx/list", prv.Mempool)
+
+	blocskUri := fmt.Sprintf(peer.BlocksUri, ":from", ":to")
+	app.Handle(http.MethodGet, version, "/node"+blocskUri, prv.BlocksByNumber)
 }
