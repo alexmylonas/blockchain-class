@@ -49,6 +49,7 @@ func New(genesis genesis.Genesis, storage Storage, evHandler func(v string, args
 
 		evHandler("Account %s, Balance: %d", accountID, balance)
 	}
+	// Read all the blocks from the storage and validate them.
 	iter := db.ForEach()
 
 	for block, err := iter.Next(); !iter.Done(); block, err = iter.Next() {
