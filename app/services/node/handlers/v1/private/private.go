@@ -101,3 +101,27 @@ func (h Handlers) SubmitPeer(ctx context.Context, w http.ResponseWriter, r *http
 	return web.Respond(ctx, w, nil, http.StatusOK)
 
 }
+
+func (h Handlers) SubmitNodeTransaction(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	v, err := web.GetValues(ctx)
+	if err != nil {
+		return web.NewShutdownError("web value misisng from context")
+	}
+
+	var tx database.BlockTx
+	if err := web.Decode(r, &tx); err != nil {
+		return web.NewShutdownError("unabled to decode peer payload")
+	}
+
+	h.Log.Infow("submitting transaction", "traceId", v.TraceID, "tx", tx)
+	if err := h.State.UpsertNodeTransaction(tx); err != nil {
+		return v1.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	resp := struct {
+		Status string `json:"status"`
+	}{
+		Status: "ok",
+	}
+	return web.Respond(ctx, w, resp, http.StatusOK)
+}

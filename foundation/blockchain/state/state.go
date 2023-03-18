@@ -21,10 +21,10 @@ type EventHandler func(v string, args ...any)
 // providing support for mining, peer update and trasaction sharing.
 type Worker interface {
 	Shutdown()
-	// Sync()
+	Sync()
 	SignalStartMining()
 	SignalCancelMining()
-	// SignalShareTx(blockTx database.BlockTx)
+	SignalShareTx(blockTx database.BlockTx)
 }
 
 type Config struct {

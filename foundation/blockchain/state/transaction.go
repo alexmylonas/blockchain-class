@@ -22,7 +22,22 @@ func (s *State) UpsertWalletTx(signedTx database.SignedTx) error {
 	// 		s.mempool.Truncate()
 	// 	}()
 	// }
-	// s.Worker.SignalShareTx(tx)
+
+	s.Worker.SignalShareTx(tx)
+	s.Worker.SignalStartMining()
+
+	return nil
+}
+
+func (s *State) UpsertNodeTransaction(tx database.BlockTx) error {
+	if err := tx.Validate(s.genesis.ChainID); err != nil {
+		return err
+	}
+
+	if err := s.mempool.Upsert(tx); err != nil {
+		return err
+	}
+
 	s.Worker.SignalStartMining()
 
 	return nil

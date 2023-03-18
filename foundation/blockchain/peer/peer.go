@@ -6,11 +6,12 @@ import (
 )
 
 const (
-	BaseUrl    = "http://%s/v1/node"
-	StatusUri  = "/status"
-	MempoolUri = "/tx/list"
-	BlocksUri  = "/block/list/%s/%s"
-	PeerUri    = "/peers"
+	BaseUrl     = "http://%s/v1/node"
+	StatusUri   = "/status"
+	MempoolUri  = "/tx/list"
+	BlocksUri   = "/block/list/%s/%s"
+	PeerUri     = "/peers"
+	TxSubmitUri = "/tx/submit"
 )
 
 type Peer struct {

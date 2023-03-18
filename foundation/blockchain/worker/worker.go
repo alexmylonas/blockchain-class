@@ -3,6 +3,7 @@ package worker
 import (
 	"sync"
 
+	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/state"
 )
 
@@ -13,8 +14,8 @@ type Worker struct {
 	shutdown     chan struct{}
 	startMining  chan bool
 	cancelMining chan bool
-	// txSharing    chan database.BlockTx
-	evHandler state.EventHandler
+	txSharing    chan database.BlockTx
+	evHandler    state.EventHandler
 }
 
 // Run creates a worker, registers it with the state and starts it.
@@ -24,14 +25,17 @@ func Run(st *state.State, evHandler state.EventHandler) {
 		shutdown:     make(chan struct{}),
 		startMining:  make(chan bool, 1),
 		cancelMining: make(chan bool, 1),
-		// txSharing:    make(chan database.BlockTx),
-		evHandler: evHandler,
+		txSharing:    make(chan database.BlockTx, maxTxShareRequests),
+		evHandler:    evHandler,
 	}
 
 	st.Worker = &w
 
 	// Sync node before starting any worker operations.
 	w.Sync()
+
+	// Load the set of operations to run.
+
 	consensusOperation := w.powOperations
 	// if st.Consensus == state.ConsensusPoA {
 	// 	consensusOperation = w.poaOperations
@@ -40,7 +44,7 @@ func Run(st *state.State, evHandler state.EventHandler) {
 	operations := []func(){
 		consensusOperation,
 		// w.peerOperations,
-		// w.shareTxOperations,
+		w.shareTxOperations,
 	}
 
 	g := len(operations)
@@ -100,6 +104,16 @@ func (w *Worker) SignalStartMining() {
 	default:
 	}
 	w.evHandler("worker: SignalStartMing: mining signaled")
+}
+
+func (w *Worker) SignalShareTx(tx database.BlockTx) {
+	select {
+	case w.txSharing <- tx:
+		w.evHandler("worker: SignalShareTx: tx sharing signaled")
+	default:
+		// This means the channel is full. We don't want to block here.
+		w.evHandler("worker: SignalShareTx: tx sharing signaled (dropped)")
+	}
 }
 
 func (w *Worker) SignalCancelMining() {

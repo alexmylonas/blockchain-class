@@ -142,3 +142,28 @@ func send(method string, url string, dataSend any, dataRecv any) error {
 
 	return nil
 }
+
+// NetSendTxToPeers sends a transaction to all known peers.
+func (s *State) NetSendTxToPeers(tx database.BlockTx) {
+	s.evHandler("state: NetSendTxToPeers: started")
+	defer s.evHandler("state: NetSendTxToPeers: completed")
+
+	// CORE NOTE: Bitcoin does not send full transaction immediately to save bandwidth.
+	// A node will only send the transaction to mempool key first so the receiving node
+	// can check if the y already have the the transaction or not. If the receiving node
+	// doesn't have it, then it will request the transaction based on the mempool key it received.
+
+	// FOr now, we will send the full transaction to all known peers.
+	txHash, _ := tx.Hash()
+	txHashStr := string(txHash[:])
+	for _, pr := range s.KnowExternalPeers() {
+
+		s.evHandler("state: NetSendTxToPeers: sending tx[%s] to peer %s", txHashStr, pr.Host)
+
+		txUrl := pr.Url() + peer.TxSubmitUri
+		if err := send(http.MethodPost, txUrl, tx, nil); err != nil {
+			// In real world, you wouldn't caret if a transaction failed to send to a peer.
+			s.evHandler("state: NetSendTxToPeers: WARNING %s: %s", pr.Host, err)
+		}
+	}
+}

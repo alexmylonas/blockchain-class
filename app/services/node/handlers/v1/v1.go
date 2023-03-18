@@ -61,6 +61,8 @@ func PrivateRoutes(app *web.App, cfg Config) {
 	app.Handle(http.MethodGet, version, "/node/status", prv.Status)
 	app.Handle(http.MethodGet, version, "/node/tx/list", prv.Mempool)
 
+	app.Handle(http.MethodPost, version, "/node/tx/submit", prv.SubmitNodeTransaction)
+
 	blocskUri := fmt.Sprintf(peer.BlocksUri, ":from", ":to")
 	app.Handle(http.MethodGet, version, "/node"+blocskUri, prv.BlocksByNumber)
 }
