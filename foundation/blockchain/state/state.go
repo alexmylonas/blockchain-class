@@ -29,7 +29,7 @@ type Worker interface {
 type Config struct {
 	Beneficiary database.AccountID
 	// Host           string
-	// Storage        database.Storage
+	Storage        database.Storage
 	Genesis        genesis.Genesis
 	SelectStrategy string
 	// KnownPeers     *peer.PeerSet
@@ -48,7 +48,7 @@ type State struct {
 	// consensus     string
 
 	// knownPeers *peer.PeerSet
-	// storage    database.Storage
+	storage database.Storage
 	genesis genesis.Genesis
 	mempool *mempool.Mempool
 
@@ -59,7 +59,7 @@ type State struct {
 
 func New(cfg Config, ev func(v string, args ...any)) (*State, error) {
 
-	db, err := database.New(cfg.Genesis, ev)
+	db, err := database.New(cfg.Genesis, cfg.Storage, ev)
 	if err != nil {
 		return nil, err
 	}

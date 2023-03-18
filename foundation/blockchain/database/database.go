@@ -9,17 +9,35 @@ import (
 	"github.com/ardanlabs/blockchain/foundation/blockchain/signature"
 )
 
+type Storage interface {
+	Write(block BlockData) error
+	GetBlock(hash string) (BlockData, error)
+	GetBlockByNumber(number uint64) (BlockData, error)
+	ForEach() Iterator
+	Close() error
+	Reset() error
+}
+
+type Iterator interface {
+	Next() (BlockData, error)
+	Done() bool
+}
+
+// ===========================
+
 type Database struct {
 	mu          sync.RWMutex
 	genesis     genesis.Genesis
 	latestBlock Block
 	accounts    map[AccountID]Account
+	storage     Storage
 }
 
-func New(genesis genesis.Genesis, evHandler func(v string, args ...any)) (*Database, error) {
+func New(genesis genesis.Genesis, storage Storage, evHandler func(v string, args ...any)) (*Database, error) {
 	db := Database{
 		genesis:  genesis,
 		accounts: make(map[AccountID]Account),
+		storage:  storage,
 	}
 
 	for accountStr, balance := range genesis.Balances {
@@ -31,8 +49,36 @@ func New(genesis genesis.Genesis, evHandler func(v string, args ...any)) (*Datab
 
 		evHandler("Account %s, Balance: %d", accountID, balance)
 	}
+	iter := db.ForEach()
 
+	for block, err := iter.Next(); !iter.Done(); block, err = iter.Next() {
+		if err != nil {
+			return nil, err
+		}
+
+		if err := block.ValidateBlock(db.latestBlock, db.HashState(), evHandler); err != nil {
+			return nil, err
+		}
+
+		// Update the database with the information from the block.
+		for _, tx := range block.MerkleTree.Values() {
+			db.ApplyTransaction(block, tx)
+		}
+
+		db.ApplyMiningReward(block)
+
+		db.latestBlock = block
+
+	}
 	return &db, nil
+}
+
+func (db *Database) ForEach() DatabaseIterator {
+	return DatabaseIterator{iterator: db.storage.ForEach()}
+}
+
+func (db *Database) Close() error {
+	return db.storage.Close()
 }
 
 func (db *Database) Remove(accountID AccountID) {
@@ -180,4 +226,25 @@ func (db *Database) ApplyTransaction(block Block, tx BlockTx) error {
 	db.accounts[block.Header.BeneficiaryID] = bnfc
 
 	return nil
+}
+
+type DatabaseIterator struct {
+	iterator Iterator
+}
+
+func (di *DatabaseIterator) Next() (Block, error) {
+	blockData, err := di.iterator.Next()
+	if err != nil {
+		return Block{}, err
+	}
+
+	return ToBlock(blockData)
+}
+
+func (di *DatabaseIterator) Done() bool {
+	return di.iterator.Done()
+}
+
+func (d *Database) Write(blockData BlockData) error {
+	return d.storage.Write(NewBlockData(blockData))
 }

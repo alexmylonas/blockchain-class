@@ -68,9 +68,9 @@ func (s *State) validateUpdateDatabase(block database.Block) error {
 	}
 
 	// Write block to database.
-	// if err := s.db.Write(block) err != nil {
-	// 	return err
-	// }
+	if err := s.db.Write(block); err != nil {
+		return err
+	}
 
 	// Update the state with the new block.
 	s.db.UpdateLatestBlock(block)

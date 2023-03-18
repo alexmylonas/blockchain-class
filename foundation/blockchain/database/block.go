@@ -178,7 +178,7 @@ func (b *Block) performPOW(ctx context.Context, ev func(v string, args ...any)) 
 	}
 }
 
-func (b Block) ValidateBlock(previousBlock Block, stateRoot string, evHandler func(v string, args ...any)) error {
+func (b *Block) ValidateBlock(previousBlock Block, stateRoot string, evHandler func(v string, args ...any)) error {
 	evHandler("database: ValidateBlock: blk[%d]: check: chain is not forked", b.Header.Number)
 
 	// The node who sent this block has a chain that is two or more blocks ahead of us.

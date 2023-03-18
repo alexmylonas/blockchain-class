@@ -14,6 +14,7 @@ import (
 	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/genesis"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/state"
+	"github.com/ardanlabs/blockchain/foundation/blockchain/storage/disk"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/worker"
 	"github.com/ardanlabs/blockchain/foundation/logger"
 	"github.com/ardanlabs/blockchain/foundation/nameservice"
@@ -63,8 +64,8 @@ func run(log *zap.SugaredLogger) error {
 			PrivateHost     string        `conf:"default:0.0.0.0:9080"`
 		}
 		State struct {
-			Beneficiary string `conf:"default:miner1"`
-			// DBPath         string `conf:"default:zblock/miner1/"`
+			Beneficiary    string `conf:"default:miner1"`
+			DBPath         string `conf:"default:zblock/miner1/"`
 			SelectStrategy string `conf:"default:Tip"`
 			// OriginPeers    string `conf:"default:0.0.0.0:9080"`
 			// Consensus      string `conf:"default:POW"` // Change to POA to run proof of authority
@@ -136,6 +137,12 @@ func run(log *zap.SugaredLogger) error {
 		log.Infow(s, "traceid", "0000000-0000-0000-0000-000000000000")
 	}
 
+	// Construct the disk storage
+	storage, err := disk.New(cfg.State.DBPath)
+	if err != nil {
+		return fmt.Errorf("unable to create storage: %w", err)
+	}
+
 	// Load the genesis file for blockhain settings and origin balances
 	genesis, err := genesis.Load()
 	if err != nil {
@@ -146,6 +153,7 @@ func run(log *zap.SugaredLogger) error {
 	state, err := state.New(state.Config{
 		Beneficiary: database.PublicKeyToAccountID(privateKey.PublicKey),
 		Genesis:     genesis,
+		Storage:     storage,
 		// Host:        cfg.Web.PrivateHost,
 		// DBPath:         cfg.State.DBPath,
 		SelectStrategy: cfg.State.SelectStrategy,
