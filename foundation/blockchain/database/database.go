@@ -245,6 +245,6 @@ func (di *DatabaseIterator) Done() bool {
 	return di.iterator.Done()
 }
 
-func (d *Database) Write(blockData BlockData) error {
-	return d.storage.Write(NewBlockData(blockData))
+func (d *Database) Write(block Block) error {
+	return d.storage.Write(NewBlockData(block))
 }

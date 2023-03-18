@@ -166,7 +166,13 @@ func (b *Block) performPOW(ctx context.Context, ev func(v string, args ...any)) 
 
 		hash := b.Hash()
 		if !isHashSolved(b.Header.Difficulty, hash) {
-			b.Header.Nonce++
+			nBig, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+			if err != nil {
+				return err
+			}
+			b.Header.Nonce = nBig.Uint64()
+			// Regenerating a random number seems faster than incrementing a number
+			// b.Header.Nonce++
 			continue
 		}
 		// We have a solved hash
