@@ -13,6 +13,7 @@ import (
 	"github.com/ardanlabs/blockchain/app/services/node/handlers"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/genesis"
+	"github.com/ardanlabs/blockchain/foundation/blockchain/peer"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/state"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/storage/disk"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/worker"
@@ -64,10 +65,10 @@ func run(log *zap.SugaredLogger) error {
 			PrivateHost     string        `conf:"default:0.0.0.0:9080"`
 		}
 		State struct {
-			Beneficiary    string `conf:"default:miner1"`
-			DBPath         string `conf:"default:zblock/miner1/"`
-			SelectStrategy string `conf:"default:Tip"`
-			// OriginPeers    string `conf:"default:0.0.0.0:9080"`
+			Beneficiary    string   `conf:"default:miner1"`
+			DBPath         string   `conf:"default:zblock/miner1/"`
+			SelectStrategy string   `conf:"default:Tip"`
+			OriginPeers    []string `conf:"default:0.0.0.0:9080"`
 			// Consensus      string `conf:"default:POW"` // Change to POA to run proof of authority
 		}
 		NameService struct {
@@ -131,6 +132,12 @@ func run(log *zap.SugaredLogger) error {
 	if err != nil {
 		return fmt.Errorf("unable to load private key: %w", err)
 	}
+	// ======== Peer initialization ===
+	peerSet := peer.NewPeerSet()
+	for _, host := range cfg.State.OriginPeers {
+		peerSet.Add(peer.New(host))
+	}
+	peerSet.Add(peer.New(cfg.Web.PrivateHost))
 
 	ev := func(v string, args ...any) {
 		s := fmt.Sprintf(v, args...)
@@ -151,13 +158,12 @@ func run(log *zap.SugaredLogger) error {
 
 	// Create the blockchain state.
 	state, err := state.New(state.Config{
-		Beneficiary: database.PublicKeyToAccountID(privateKey.PublicKey),
-		Genesis:     genesis,
-		Storage:     storage,
-		// Host:        cfg.Web.PrivateHost,
-		// DBPath:         cfg.State.DBPath,
+		Beneficiary:    database.PublicKeyToAccountID(privateKey.PublicKey),
+		Host:           cfg.Web.PrivateHost,
+		Genesis:        genesis,
+		Storage:        storage,
 		SelectStrategy: cfg.State.SelectStrategy,
-		// OriginPeers:    cfg.State.OriginPeers,
+		KnownPeers:     peerSet,
 		// Consensus:      cfg.State.Consensus,
 	}, ev)
 

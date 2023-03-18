@@ -30,6 +30,8 @@ func Run(st *state.State, evHandler state.EventHandler) {
 
 	st.Worker = &w
 
+	// Sync node before starting any worker operations.
+	w.Sync()
 	consensusOperation := w.powOperations
 	// if st.Consensus == state.ConsensusPoA {
 	// 	consensusOperation = w.poaOperations

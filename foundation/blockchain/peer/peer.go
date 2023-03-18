@@ -6,8 +6,8 @@ type Peer struct {
 	Host string
 }
 
-func New(host string) *Peer {
-	return &Peer{
+func New(host string) Peer {
+	return Peer{
 		Host: host,
 	}
 }

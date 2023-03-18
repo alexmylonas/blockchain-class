@@ -6,6 +6,7 @@ import (
 	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/genesis"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/mempool"
+	"github.com/ardanlabs/blockchain/foundation/blockchain/peer"
 )
 
 const (
@@ -27,13 +28,13 @@ type Worker interface {
 }
 
 type Config struct {
-	Beneficiary database.AccountID
-	// Host           string
+	Beneficiary    database.AccountID
+	Host           string
 	Storage        database.Storage
 	Genesis        genesis.Genesis
 	SelectStrategy string
-	// KnownPeers     *peer.PeerSet
-	EvHandler EventHandler
+	KnownPeers     *peer.PeerSet
+	EvHandler      EventHandler
 	// Consensus      string
 }
 
@@ -44,13 +45,13 @@ type State struct {
 
 	beneficiaryID database.AccountID
 	evHandler     EventHandler
-	// host          string
+	host          string
 	// consensus     string
 
-	// knownPeers *peer.PeerSet
-	storage database.Storage
-	genesis genesis.Genesis
-	mempool *mempool.Mempool
+	knownPeers *peer.PeerSet
+	storage    database.Storage
+	genesis    genesis.Genesis
+	mempool    *mempool.Mempool
 
 	db *database.Database
 
@@ -71,15 +72,15 @@ func New(cfg Config, ev func(v string, args ...any)) (*State, error) {
 
 	state := State{
 		beneficiaryID: cfg.Beneficiary,
+		storage:       cfg.Storage,
 		evHandler:     ev,
-		// host:          cfg.Host,
+		host:          cfg.Host,
 		// consensus:     cfg.Consensus,
-		// knownPeers:    cfg.KnownPeers,
-		// storage:       cfg.Storage,
-		genesis: cfg.Genesis,
-		mempool: mempool,
 
-		db: db,
+		knownPeers: cfg.KnownPeers,
+		genesis:    cfg.Genesis,
+		mempool:    mempool,
+		db:         db,
 	}
 	// The Worker is not set here. The call to worker.Run will assign itself
 	// and start everything up and running for the node
@@ -130,3 +131,11 @@ func (s *State) Accounts() map[database.AccountID]database.Account {
 // func (s *State) AddKnowPeer(peer peer.Peer) bool {
 // s.knownPeers.Add(peer)
 // }
+
+func (s *State) KnowExternalPeers() []peer.Peer {
+	return s.knownPeers.Copy(s.host)
+}
+
+func (s *State) Host() string {
+	return s.host
+}
