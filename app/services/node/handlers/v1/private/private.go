@@ -3,6 +3,7 @@ package private
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -116,6 +117,39 @@ func (h Handlers) SubmitNodeTransaction(ctx context.Context, w http.ResponseWrit
 	h.Log.Infow("submitting transaction", "traceId", v.TraceID, "tx", tx)
 	if err := h.State.UpsertNodeTransaction(tx); err != nil {
 		return v1.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	resp := struct {
+		Status string `json:"status"`
+	}{
+		Status: "ok",
+	}
+	return web.Respond(ctx, w, resp, http.StatusOK)
+}
+
+// ProposeBlock
+func (h Handlers) ProposeBlock(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
+	// Decode the JSON in the post call into a file system block
+	var blockData database.BlockData
+	if err := web.Decode(r, &blockData); err != nil {
+		return err
+	}
+
+	// Convert the block data into a block. This action will create a merkle
+	// tree of the set of transactions required for blockchain operations
+
+	block, err := database.ToBlock(blockData)
+	if err != nil {
+		return err
+	}
+
+	if err := h.State.ProcessProposedBlock(block); err != nil {
+		// if errors.Is(err, database.ErrChainForked) {
+		// h.State.Reorganize()
+		// }
+
+		return v1.NewRequestError(errors.New("block rejected"), http.StatusNotAcceptable)
 	}
 
 	resp := struct {

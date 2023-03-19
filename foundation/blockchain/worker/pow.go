@@ -91,7 +91,7 @@ func (w *Worker) runPowOperations() {
 		}()
 
 		t := time.Now()
-		_, err := w.state.MineNewBlock(ctx)
+		block, err := w.state.MineNewBlock(ctx)
 		duration := time.Since(t)
 
 		w.evHandler("worker: runPowOperations: MineNewBlock completed in %s", duration)
@@ -109,7 +109,10 @@ func (w *Worker) runPowOperations() {
 		}
 
 		// WOW, we mined a block
-		// TODO: send the block to the network
+		if err := w.state.NetSendBlockToPeers(block); err != nil {
+			w.evHandler("worker: runPowOperations: MINING: NetSendBlockToPeers: WARNING %s", err)
+		}
+
 	}()
 
 	wg.Wait()

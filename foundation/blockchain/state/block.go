@@ -106,8 +106,5 @@ func (s *State) validateUpdateDatabase(block database.Block) error {
 
 	s.db.ApplyMiningReward(block)
 
-	// Send an event about this new block
-	// s.blockEvent(block)
-
 	return nil
 }

@@ -167,3 +167,23 @@ func (s *State) NetSendTxToPeers(tx database.BlockTx) {
 		}
 	}
 }
+
+func (s *State) NetSendBlockToPeers(block database.Block) error {
+	s.evHandler("state: NetSendBlockToPeers: started")
+	defer s.evHandler("state: NetSendBlockToPeers: completed")
+
+	blockData := database.NewBlockData(block)
+	for _, pr := range s.KnowExternalPeers() {
+		s.evHandler("state: NetSendBlockToPeers: sending block[%s] to peer %s", blockData.Hash, pr.Host)
+
+		blockSubmitUrl := pr.Url() + peer.BlockSubmitUri
+
+		var status struct {
+			Status string `json:"status"`
+		}
+		if err := send(http.MethodPost, blockSubmitUrl, blockData, &status); err != nil {
+			return err
+		}
+	}
+	return nil
+}
