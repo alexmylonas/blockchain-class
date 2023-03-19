@@ -7,6 +7,7 @@
 
 zblock/miner1/*
 zblock/miner2/*
+zblock/miner3/*
 
 # Test binary, built with `go test -c`
 *.test

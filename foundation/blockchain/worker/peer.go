@@ -16,6 +16,8 @@ func (w *Worker) peerOperations() {
 	// On startup talk to the leader node and get an updated peers list.
 	// Then share with the network that this node is available for transactions
 	// and block submissions.
+
+	// TODO: I believe this is all happening in initial sync
 	w.runPeerOperations()
 
 	for {
