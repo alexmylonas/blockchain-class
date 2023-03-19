@@ -2,15 +2,18 @@ package worker
 
 import (
 	"sync"
+	"time"
 
 	"github.com/ardanlabs/blockchain/foundation/blockchain/database"
 	"github.com/ardanlabs/blockchain/foundation/blockchain/state"
 )
 
+const peerInterval = time.Minute
+
 type Worker struct {
-	state *state.State
-	wg    sync.WaitGroup
-	// ticker       time.Ticker
+	state        *state.State
+	wg           sync.WaitGroup
+	ticker       time.Ticker
 	shutdown     chan struct{}
 	startMining  chan bool
 	cancelMining chan bool
@@ -22,6 +25,7 @@ type Worker struct {
 func Run(st *state.State, evHandler state.EventHandler) {
 	w := Worker{
 		state:        st,
+		ticker:       *time.NewTicker(peerInterval),
 		shutdown:     make(chan struct{}),
 		startMining:  make(chan bool, 1),
 		cancelMining: make(chan bool, 1),
@@ -43,7 +47,7 @@ func Run(st *state.State, evHandler state.EventHandler) {
 
 	operations := []func(){
 		consensusOperation,
-		// w.peerOperations,
+		w.peerOperations,
 		w.shareTxOperations,
 	}
 
@@ -61,7 +65,7 @@ func Run(st *state.State, evHandler state.EventHandler) {
 		}(op)
 	}
 
-	// Wait for all the goroutines to start.
+	// Wait for all the goroutines to start, before returnin to main.
 	for i := 0; i < g; i++ {
 		<-hasStarted
 	}

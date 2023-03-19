@@ -16,6 +16,7 @@ func (w *Worker) Sync() {
 			continue
 		}
 
+		// Add new peers to this nodes list
 		w.addNewPeers(peerStatus.KnownPeers)
 
 		pool, err := w.state.NetRequestMempool(peer)
