@@ -68,6 +68,11 @@ load2:
 load3:
 	go run app/wallet/cli/main.go send -a kennedy -n 5 -f 0xF01813E4B85e178A83e29B8E7bF26BD830a25f32 -t 0xbEE6ACE826eC3DE1B6349888B9151B92522F7F76 -v 100
 
+load4:
+	go run app/wallet/cli/main.go send -a kennedy -n 6 -f 0xF01813E4B85e178A83e29B8E7bF26BD830a25f32 -t 0xbEE6ACE826eC3DE1B6349888B9151B92522F7F76 -v 100
+	go run app/wallet/cli/main.go send -a pavel -n 5 -f 0xdd6B972ffcc631a62CAE1BB9d80b7ff429c8ebA4 -t 0xbEE6ACE826eC3DE1B6349888B9151B92522F7F76 -v 75
+	go run app/wallet/cli/main.go send -a pavel -n 6 -f 0xdd6B972ffcc631a62CAE1BB9d80b7ff429c8ebA4 -t 0xbEE6ACE826eC3DE1B6349888B9151B92522F7F76 -v 75
+	
 deps-reset:
 	git checkout -- go.mod
 	go mod tidy
