@@ -8,8 +8,6 @@ import (
 	"github.com/ardanlabs/blockchain/foundation/blockchain/state"
 )
 
-const peerInterval = time.Minute
-
 type Worker struct {
 	state        *state.State
 	wg           sync.WaitGroup
@@ -23,14 +21,22 @@ type Worker struct {
 
 // Run creates a worker, registers it with the state and starts it.
 func Run(st *state.State, evHandler state.EventHandler) {
+
 	w := Worker{
 		state:        st,
-		ticker:       *time.NewTicker(peerInterval),
+		ticker:       *time.NewTicker(powpeerInterval),
 		shutdown:     make(chan struct{}),
 		startMining:  make(chan bool, 1),
 		cancelMining: make(chan bool, 1),
 		txSharing:    make(chan database.BlockTx, maxTxShareRequests),
 		evHandler:    evHandler,
+	}
+
+	consensusOperation := w.powOperations
+	if st.Consensus() == state.ConsensusPoA {
+		consensusOperation = w.poaOperations
+		// Validate ticker works as intended
+		// w.ticker = *time.NewTicker(poaPeerInterval)
 	}
 
 	st.Worker = &w
@@ -39,11 +45,6 @@ func Run(st *state.State, evHandler state.EventHandler) {
 	w.Sync()
 
 	// Load the set of operations to run.
-
-	consensusOperation := w.powOperations
-	// if st.Consensus == state.ConsensusPoA {
-	// 	consensusOperation = w.poaOperations
-	// }
 
 	operations := []func(){
 		consensusOperation,

@@ -35,7 +35,7 @@ type Config struct {
 	SelectStrategy string
 	KnownPeers     *peer.PeerSet
 	EvHandler      EventHandler
-	// Consensus      string
+	Consensus      string
 }
 
 type State struct {
@@ -46,7 +46,7 @@ type State struct {
 	beneficiaryID database.AccountID
 	evHandler     EventHandler
 	host          string
-	// consensus     string
+	consensus     string
 
 	knownPeers *peer.PeerSet
 	storage    database.Storage
@@ -75,7 +75,7 @@ func New(cfg Config, ev func(v string, args ...any)) (*State, error) {
 		storage:       cfg.Storage,
 		evHandler:     ev,
 		host:          cfg.Host,
-		// consensus:     cfg.Consensus,
+		consensus:     cfg.Consensus,
 
 		knownPeers: cfg.KnownPeers,
 		genesis:    cfg.Genesis,
@@ -103,6 +103,10 @@ func (s *State) Shutdown() error {
 	// s.resyncWG.Wait()
 
 	return nil
+}
+
+func (s *State) Consensus() string {
+	return s.consensus
 }
 
 func (s *State) Genesis() genesis.Genesis {

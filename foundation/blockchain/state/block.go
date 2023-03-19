@@ -22,9 +22,9 @@ func (s *State) MineNewBlock(ctx context.Context) (database.Block, error) {
 
 	// If PoA is being used drop diffulty to 1.
 	difficulty := s.genesis.Difficulty
-	// if s.Consensus == ConsensusPoA {
-	// difficulty = 1
-	// }
+	if s.Consensus() == ConsensusPoA {
+		difficulty = 1
+	}
 
 	s.evHandler("viewer: MineNewBlock: MINING creating new block")
 

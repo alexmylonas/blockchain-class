@@ -1,6 +1,13 @@
 package worker
 
-import "github.com/ardanlabs/blockchain/foundation/blockchain/peer"
+import (
+	"time"
+
+	"github.com/ardanlabs/blockchain/foundation/blockchain/peer"
+)
+
+const powpeerInterval = time.Minute
+const poaPeerInterval = time.Second * 10
 
 // CORE NOTE The p2p network is managed by this this goroutine.
 // There is a single node that is considered the "leader" of the network.
