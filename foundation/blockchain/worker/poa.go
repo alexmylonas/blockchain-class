@@ -12,13 +12,13 @@ import (
 )
 
 // CORE NOTE The POA mining operation is managed by this functio which runs on its own goroutine
-// The node starts a loop that is on an 12 second interval. At the beggingin of each cycle the selection algorithm
+// The node starts a loop that is on an 5 second interval. At the beggingin of each cycle the selection algorithm
 // is executed to determine if this node needs to mine the next block. If this node is not selected,
 // it will wait for the next cycle. If this node is selected, it will mine the next block.
 
 // cycleDuration sets the operations to every 5 seconds
 
-const secondsPerCycle = 12
+const secondsPerCycle = 5
 const cycleDuration = secondsPerCycle * time.Second
 
 // poaOperations is the main loop for the worker
@@ -144,8 +144,11 @@ func (w *Worker) selection() string {
 
 	// Based on the latest block, pick an index number from the registry
 
+	latestBlock := w.state.LatestBlock()
+	lastBlockHash := latestBlock.Hash()
 	h := fnv.New32a()
-	h.Write([]byte(w.state.LatestBlock().Hash()))
+
+	h.Write([]byte(lastBlockHash))
 	integerHash := h.Sum32()
 	i := integerHash % uint32(len(names))
 

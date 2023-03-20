@@ -69,7 +69,7 @@ type Block struct {
 	MerkleTree *merkle.Tree[BlockTx]
 }
 
-func (b Block) Hash() string {
+func (b *Block) Hash() string {
 	if b.Header.Number == 0 {
 		return signature.ZeroHash
 	}
